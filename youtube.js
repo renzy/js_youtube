@@ -9,7 +9,9 @@ var _youtube = {
 	init: function(){
 		if(this.loaded){
 			if(this.debug) console.log('_youtube:init()');
-			this.ratio = 16/9;
+			this.ratio = { width:16, height:9 };
+			this.ratio.percent = (this.ratio.height/this.ratio.width)*100;
+			
 			this.player = {};
 			this.player_count = 0;
 
@@ -34,33 +36,38 @@ var _youtube = {
 										: '100%'
 								};
 
-							//set up iframes
-							if(type=='frame' && /youtube\.com/gi.test(item.getAttribute('src'))){
-								this.player[ele_id] = new YT.Player(ele_id,{
-									events: { 'onStateChange': this.player_state_change }
-								});
+							if((type=='frame' && /youtube\.com/gi.test(item.getAttribute('src'))) || type=='div'){
+								
+								//wrap up player to prevent conflict with existing css/styling
+								var wrapper = document.createElement('div'); 
+								wrapper.appendChild(item.cloneNode(true)); 
+								item.parentNode.replaceChild(wrapper,item);
+								item = document.getElementById(ele_id);
 
-								if(dim.width=='100%'){
-									item.parentNode.setAttribute('style', 'height:'+(get_width(item.parentNode)/this.ratio)+'px');
-									item.setAttribute('width','100%');
-									item.setAttribute('height','100%');
-								}
-							} 
-
-							//set up elements with youtube_js class
-							else if(type=='div'){
+								//responsive attributes
 								if(dim.width=='100%')
-									item.parentNode.setAttribute('style', 'height:'+(get_width(item.parentNode)/this.ratio)+'px');
+									this.responsive_attributes(item);
 
-								this.player[ele_id] = new YT.Player(ele_id,{
-									width: dim.width,
-									height: dim.height,
-									videoId: vid_id,
-									events: { 'onStateChange': this.player_state_change }
-								});
+								
+								//iframe player config
+								if(type=='frame'){
+									this.player[ele_id] = new YT.Player(ele_id,{
+										events: { 'onStateChange': this.player_state_change }
+									});
+								} 
+
+								//youtube_js class player config
+								else if(type=='div'){
+									this.player[ele_id] = new YT.Player(ele_id,{
+										width: dim.width,
+										height: dim.height,
+										videoId: vid_id,
+										events: { 'onStateChange': this.player_state_change }
+									});
+								}
+
+								this.player_count++;
 							}
-
-							this.player_count++;
 						}
 					} catch(err){
 						if(this.debug) console.log(err);
@@ -70,6 +77,13 @@ var _youtube = {
 
 			if(this.debug) console.log('\tyoutube videos configured: '+this.player_count);
 		}
+	},
+
+	responsive_attributes: function(item){
+		item.parentNode.setAttribute('style','height:0;position:relative;padding-bottom:'+this.ratio.percent+'%;');
+		item.setAttribute('height','100%');
+		item.setAttribute('width','100%');
+		item.setAttribute('style','position:absolute;');
 	},
 
 	alter: function(){
@@ -154,7 +168,6 @@ var _youtube = {
 	}
 };
 
-
 if(typeof YT!=='object'){
 	var tag = document.createElement('script');
 	tag.src = "https://www.youtube.com/player_api";
@@ -167,10 +180,3 @@ function onYouTubeIframeAPIReady(){
 	_youtube.init(); 
 }
 function onYouTubePlayerReady(){ _youtube.init(); }
-
-
-function get_width(e) {
-	var styles = window.getComputedStyle(e),
-		padding = parseFloat(styles.paddingLeft)+parseFloat(styles.paddingRight);
-	return e.clientWidth-padding;
-}
