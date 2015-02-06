@@ -17,104 +17,86 @@ var _youtube = {
 				this.player_count = 0;
 			}
 
-			this.combo = {
-				frame: document.getElementsByTagName('iframe'),
-				div: document.getElementsByClassName('youtube_js')
-			};
+			var combo = document.querySelectorAll('iframe, .youtube_js'),
+				attr = ['id','class','data-vid','src','width','height'];
 
-			for(var type in this.combo){
-				for(var i=0; i<this.combo[type].length; i++){
-					try {
-						if(this.combo[type][i].getAttribute('data-vid')!=null){
-							var item = this.combo[type][i];
+			for(var i=0; i<combo.length; i++){
+				try {
+					//set element attributes
+					var item = {
+						type: (typeof combo[i].tagName!=='undefined') ? combo[i].tagName.toLowerCase() : false,
+						obj: combo[i]
+					};
+					for(var a=0; a<attr.length; a++){
+						item[attr[a].replace('-','_')] = (typeof item.obj.getAttribute(attr[a])!=='undefined' && item.obj.getAttribute(attr[a])!=null)
+							? item.obj.getAttribute(attr[a])
+							: false;
 
-							if((type=='frame' && /youtube\.com/gi.test(item.getAttribute('src'))) || type=='div'){
-								var ele_id = item.getAttribute('id'),
-									vid_id = item.getAttribute('data-vid'),
-									dim = {
-										width: (item.getAttribute('width')!=null) 
-											? item.getAttribute('width')
-											: '100%',
-										height: (item.getAttribute('height')!=null) 
-											? item.getAttribute('height')
-											: '100%'
-									};
-
-								if(typeof this.player[ele_id]==='undefined'){
-
-									//wrap up player to prevent conflict with existing css/styling
-									var wrapper = document.createElement('div');
-									wrapper.setAttribute('class','youtube_pod');
-									wrapper.appendChild(item.cloneNode(true)); 
-									item.parentNode.replaceChild(wrapper,item);
-									item = document.getElementById(ele_id);
-
-									//responsive attributes
-									if(dim.width=='100%')
-										this.responsive_attributes(item);
-
-									//iframe player config
-									if(type=='frame'){
-										this.player[ele_id] = new YT.Player(ele_id,{
-											events: { 'onStateChange': this.player_state_change }
-										});
-									} 
-
-									//youtube_js class player config
-									else if(type=='div'){
-										this.player[ele_id] = new YT.Player(ele_id,{
-											width: dim.width,
-											height: dim.height,
-											videoId: vid_id,
-											events: { 'onStateChange': this.player_state_change }
-										});
-									}
-
-									if(this.debug){
-										console.log('_youtube:init()');
-										console.log('\tplayer for #'+ele_id+' configured');
-									}
-
-									this.player_count++;
-								}
-							}
-						}
-					} catch(err){
-						if(this.debug) console.log(err);
+						//set dimensions to 100% by default if not set
+						if(/width|height/.test(attr[a]))
+							item[attr[a]] = '100%';
 					}
+
+					//generate data-vid from other attributes if possible
+					if(!item.data_vid){
+						if(item.src && /[a-z0-9_-]{11}/gi.test(item.src))
+							item.data_vid = item.src.replace(/.*?(^|\/|v=)([a-z0-9_-]{11})(.*)?/i,'$2');
+						else if(item.class && item.id && /youtube_js/gi.test(item.class) && /^[a-z0-9_-]{11}$/i.test(item.id))
+							item.data_vid = item.id;
+
+						if(item.data_vid)
+							item.obj.setAttribute('data-vid',item.data_vid);
+					}
+
+					//couldnt find video id, skip this element
+					if(!item.data_vid) continue;
+
+					//set value for empty ids, catch for more than one element with the same id
+					if(!item.id){
+						item.id = this.generate_id();
+						item.obj.setAttribute('id',item.id);
+					} else if(this.id_exists(item.id)>1){
+						item.id = this.generate_id(item.id);
+						item.obj.setAttribute('id',item.id);
+					}
+
+					//set up new player
+					if(typeof this.player[item.id]==='undefined'){
+						var wrapper = document.createElement('div');
+						wrapper.setAttribute('class','youtube_pod');
+						wrapper.appendChild(item.obj.cloneNode(true)); 
+						item.obj.parentNode.replaceChild(wrapper,item.obj);
+						item.obj = document.getElementById(item.id);
+
+						//responsive attributes
+						if(item.width=='100%')
+							this.responsive_attributes(item.obj);
+
+						//iframe player config
+						if(item.type=='frame')
+							this.player[item.id] = new YT.Player(item.id,{
+								events: { 'onStateChange': this.player_state_change }
+							});
+						else
+							this.player[item.id] = new YT.Player(item.id,{
+								width: item.width,
+								height: item.height,
+								videoId: item.data_vid,
+								events: { 'onStateChange': this.player_state_change }
+							});
+
+						if(this.debug){
+							console.log('\tplayer for #'+item.id+' configured');
+						}
+
+						this.player_count++;
+					}
+				} catch(err){
+					if(this.debug) console.log(err);
 				}
 			}
 
 			if(this.debug) console.log('\tyoutube videos configured: '+this.player_count);
-		}
-	},
-
-	generate_source: function(vid){
-		var vid = (typeof vid!=='undefined' && /[a-z0-9_-]{11}/gi.test(vid)) 
-				? vid.replace(/.*?(^|\/|v=)([a-z0-9_-]{11})(.*)?/i,'$2') 
-				: false,
-			date = new Date(),
-			uniq = String(date.getHours())+String(date.getMinutes())+String(date.getSeconds());
-		if(!vid) return false;
-
-		vid = vid;
-
-
-		return '<div id="player-'+uniq+'" data-vid="'+vid+'" class="youtube_js"></div>';
-	},
-
-	responsive_attributes: function(item){
-		item.parentNode.setAttribute('style','height:0;position:relative;padding-bottom:'+this.ratio.percent+'%;');
-		item.setAttribute('height','100%');
-		item.setAttribute('width','100%');
-		item.setAttribute('style','position:absolute;');
-	},
-
-	alter: function(){
-		if(_youtube.debug){
-			console.log('_youtube:alter()');
-			if(this.player_play.override) console.log('\tplayer_play.override active');
-			if(this.player_play.append) console.log('\tplayer_play.append active');
 		}
 	},
 
@@ -150,12 +132,11 @@ var _youtube = {
 				//pause other players if playing
 				for(var i in _youtube.player){
 					var player = _youtube.player[i];
-					if(player.getPlayerState()==1 && player.getVideoData().video_id!=data.video_id){
+
+					if(player.getPlayerState()==1 && i!=e.target.d.getAttribute('id')){
 						player.pauseVideo();
 						if(_youtube.debug) console.log('\tpause player_id: '+i);
 					}
-
-					if(player.getVideoData().video_id==data.video_id) _youtube.active = i;
 				}
 			} else {
 				if(_youtube.debug) console.log('_youtube:player_play.override()');
@@ -187,6 +168,40 @@ var _youtube = {
 				this.append(e);
 			}
 		}
+	},
+
+	id_exists: function(id){
+		var count = document.querySelectorAll('#'+id).length;
+		return (count==0) ? false : count;
+	},
+
+	generate_id: function(prefix){
+		var prefix = (typeof prefix!=='undefined') ? prefix : 'auto';
+		do var id=prefix+'_'+this.generate_unique();
+		while(this.id_exists(id));
+		return id;
+	},
+
+	generate_unique: function(){
+		var date = new Date(),
+			uni = String(date.getHours())+String(date.getMinutes())+String(date.getSeconds())
+		return uni;
+	},
+
+	generate_source: function(vid){
+		var vid = (typeof vid!=='undefined' && /[a-z0-9_-]{11}/gi.test(vid)) 
+			? vid.replace(/.*?(^|\/|v=)([a-z0-9_-]{11})(.*)?/i,'$2') 
+			: false;
+		return (!vid) 
+			? false
+			: '<div id="'+this.generate_id(vid)+'" data-vid="'+vid+'" class="youtube_js"></div>';
+	},
+
+	responsive_attributes: function(item){
+		item.parentNode.setAttribute('style','height:0;position:relative;padding-bottom:'+this.ratio.percent+'%;');
+		item.setAttribute('height','100%');
+		item.setAttribute('width','100%');
+		item.setAttribute('style','position:absolute;');
 	}
 };
 
@@ -201,4 +216,3 @@ function onYouTubeIframeAPIReady(){
 	_youtube.loaded = true;
 	_youtube.init(); 
 }
-function onYouTubePlayerReady(){ _youtube.init(); }
