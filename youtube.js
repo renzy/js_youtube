@@ -8,6 +8,10 @@ var _youtube = {
 
 	init: function(inbound){
 		if(this.loaded){
+			var inbound = (typeof inbound!=='undefined') ? inbound : false,
+				combo = document.querySelectorAll('iframe, .youtube_js'),
+				attr = ['id','class','data-vid','src','width','height'];
+
 			if(this.debug) console.log('_youtube:init()');
 			this.ratio = { width:16, height:9 };
 			this.ratio.percent = (this.ratio.height/this.ratio.width)*100;
@@ -16,9 +20,6 @@ var _youtube = {
 				this.player = {};
 				this.player_count = 0;
 			}
-
-			var combo = document.querySelectorAll('iframe, .youtube_js'),
-				attr = ['id','class','data-vid','src','width','height'];
 
 			for(var i=0; i<combo.length; i++){
 				try {
@@ -96,8 +97,22 @@ var _youtube = {
 				}
 			}
 
+			if(this.player_count>0){
+				for(var i in this.player){
+					if(!this.id_exists(i)){
+						if(this.debug) console.log('\tremoved player '+i);
+						delete this.player[i];
+						this.player_count--;
+					}		
+				}
+			}
+
 			if(this.debug) console.log('\tyoutube videos configured: '+this.player_count);
 		}
+	},
+
+	reload: function(){
+		this.init('reload');
 	},
 
 	player_state_change: function(e){
@@ -170,13 +185,27 @@ var _youtube = {
 		}
 	},
 
+	player_stop_all: function(){
+		for(var i in _youtube.player){
+			var player = _youtube.player[i];
+
+			if(player.getPlayerState()==1){
+				player.pauseVideo();
+				if(_youtube.debug) console.log('\tpause player_id: '+i);
+			}
+		}
+	},
+
 	id_exists: function(id){
 		var count = document.querySelectorAll('#'+id).length;
 		return (count==0) ? false : count;
 	},
 
 	generate_id: function(prefix){
-		var prefix = (typeof prefix!=='undefined') ? prefix : 'auto';
+		var prefix = (typeof prefix!=='undefined') 
+			? ((/^[0-9]/.test(prefix)) ? 'v'+prefix : prefix)
+			: 'auto';
+
 		do var id=prefix+'_'+this.generate_unique();
 		while(this.id_exists(id));
 		return id;
