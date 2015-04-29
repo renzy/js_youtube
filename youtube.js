@@ -5,6 +5,7 @@
 var _youtube = {  
 	debug: 			/([\?|&|#]debug)/.test(window.location.search) ? true : false,
 	loaded: 		false,
+	auto_play_id: 	false,
 
 	init: function(inbound){
 		if(this.loaded){
@@ -40,7 +41,7 @@ var _youtube = {
 
 					//generate data-vid from other attributes if possible
 					if(!item.data_vid){
-						if(item.src && /youtube/gi.test(item.src))
+						if(item.src && /[a-z0-9_-]{11}/gi.test(item.src))
 							item.data_vid = item.src.replace(/.*?(^|\/|v=)([a-z0-9_-]{11})(.*)?/i,'$2');
 						else if(item.class && item.id && /youtube_js/gi.test(item.class) && /^[a-z0-9_-]{11}$/i.test(item.id))
 							item.data_vid = item.id;
@@ -73,18 +74,31 @@ var _youtube = {
 						if(item.width=='100%')
 							this.responsive_attributes(item.obj);
 
+						var param = {  
+							events: { onStateChange: this.player_state_change },
+							playerVars: { rel:0 }
+						};
+
 						//iframe player config
-						if(item.type=='frame')
-							this.player[item.id] = new YT.Player(item.id,{
-								events: { 'onStateChange': this.player_state_change }
-							});
-						else
-							this.player[item.id] = new YT.Player(item.id,{
+						if(item.type!='frame'){
+							param.width = item.width;
+							param.height = item.height;
+							param.videoId = item.data_vid;
+
+							if(this.auto_play_id && this.auto_play_id==item.id)
+								param.playerVars = { 'autoplay': 1 };
+						}
+
+						this.player[item.id] = new YT.Player(item.id,param);
+
+							/*this.player[item.id] = new YT.Player(item.id,{
 								width: item.width,
 								height: item.height,
 								videoId: item.data_vid,
 								events: { 'onStateChange': this.player_state_change }
-							});
+							});*/
+
+						
 
 						if(this.debug){
 							console.log('\tplayer for #'+item.id+' configured');
@@ -111,7 +125,8 @@ var _youtube = {
 		}
 	},
 
-	reload: function(){
+	reload: function(auto_play_id){
+		this.auto_play_id = (typeof auto_play_id!=='undefined') ? auto_play_id : false;
 		this.init('reload');
 	},
 
@@ -145,12 +160,14 @@ var _youtube = {
 			
 			if(!this.override){
 				//pause other players if playing
-				for(var i in _youtube.player){
-					var player = _youtube.player[i];
-
-					if(player.getPlayerState()==1 && i!=e.target.d.getAttribute('id')){
-						player.pauseVideo();
-						if(_youtube.debug) console.log('\tpause player_id: '+i);
+				if(_youtube.player.length>1){
+					for(var i in _youtube.player){
+						var player = _youtube.player[i];
+						console.log(e.target.d);
+						if(player.getPlayerState()==1 && i!=e.target.d.getAttribute('id')){
+							player.pauseVideo();
+							if(_youtube.debug) console.log('\tpause player_id: '+i);
+						}
 					}
 				}
 			} else {
