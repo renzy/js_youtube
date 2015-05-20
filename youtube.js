@@ -6,6 +6,7 @@ var _youtube = {
 	debug: 			/([\?|&|#]debug)/.test(window.location.search) ? true : false,
 	loaded: 		false,
 	auto_play_id: 	false,
+	player_vars: 	{ rel:0, showinfo:0, autoplay:0 },
 
 	init: function(inbound){
 		if(this.loaded){
@@ -76,29 +77,19 @@ var _youtube = {
 
 						var param = {  
 							events: { onStateChange: this.player_state_change },
-							playerVars: { rel:0 }
+							playerVars: this.player_vars
 						};
 
-						//iframe player config
 						if(item.type!='frame'){
 							param.width = item.width;
 							param.height = item.height;
 							param.videoId = item.data_vid;
 
 							if(this.auto_play_id && this.auto_play_id==item.id)
-								param.playerVars = { 'autoplay': 1 };
+								param.playerVars.autoplay = 1;
 						}
 
 						this.player[item.id] = new YT.Player(item.id,param);
-
-							/*this.player[item.id] = new YT.Player(item.id,{
-								width: item.width,
-								height: item.height,
-								videoId: item.data_vid,
-								events: { 'onStateChange': this.player_state_change }
-							});*/
-
-						
 
 						if(this.debug){
 							console.log('\tplayer for #'+item.id+' configured');
