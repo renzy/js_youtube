@@ -42,7 +42,7 @@ var _youtube = {
 
 					//generate data-vid from other attributes if possible
 					if(!item.data_vid){
-						if(item.src && /[a-z0-9_-]{11}/gi.test(item.src))
+						if(item.src && /youtu\.?be/gi.test(item.src) &&  && /[a-z0-9_-]{11}/gi.test(item.src))
 							item.data_vid = item.src.replace(/.*?(^|\/|v=)([a-z0-9_-]{11})(.*)?/i,'$2');
 						else if(item.class && item.id && /youtube_js/gi.test(item.class) && /^[a-z0-9_-]{11}$/i.test(item.id))
 							item.data_vid = item.id;
