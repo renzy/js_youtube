@@ -234,6 +234,15 @@ var _youtube = {
 			: '<div id="'+this.generate_id(vid)+'" data-vid="'+vid+'" class="youtube_js"></div>';
 	},
 
+	fetch_images: function(id){
+		var type=['0','1','2','3','default','hqdefault','mqdefault','sddefault','maxresdefault'],
+			base = '//img.youtube.com/vi/',
+			item = {};
+		for(var x=0; x<type.length; x++)
+			item[type[x]] = base+id+'/'+type[x]+'.jpg';
+		return item;
+	},
+
 	responsive_attributes: function(item){
 		item.parentNode.setAttribute('style','height:0;position:relative;padding-bottom:'+this.ratio.percent+'%;');
 		item.setAttribute('height','100%');
