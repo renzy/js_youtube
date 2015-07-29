@@ -151,11 +151,10 @@ var _youtube = {
 			
 			if(!this.override){
 				//pause other players if playing
-				if(_youtube.player.length>1){
+				if(_youtube.player_count>1){
 					for(var i in _youtube.player){
 						var player = _youtube.player[i];
-						console.log(e.target.d);
-						if(player.getPlayerState()==1 && i!=e.target.d.getAttribute('id')){
+						if(player.getVideoData()['video_id']!=data.video_id){
 							player.pauseVideo();
 							if(_youtube.debug) console.log('\tpause player_id: '+i);
 						}
