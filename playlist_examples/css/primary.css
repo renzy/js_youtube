@@ -1,0 +1,36 @@
+html, body, div, span, applet, object, iframe,h1, h2, h3, h4, h5, h6, p, blockquote, pre,a, abbr, acronym, address, big, cite, code,del, dfn, em, img, ins, kbd, q, s, samp,small, strike, strong, sub, sup, tt, var,b, u, i, center,dl, dt, dd, ol, ul, li,fieldset, form, label, legend,table, caption, tbody, tfoot, thead, tr, th, td,article, aside, canvas, details, embed,figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary,time, mark, audio, video { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:baseline; text-decoration:none; }
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section { display:block; }
+body { line-height:1; font:14px Verdana, Geneva, sans-serif; }
+input, textarea{ outline:none; }
+ol, ul { list-style:none; }
+blockquote, q { quotes:none; }
+blockquote:before, blockquote:after, q:before, q:after { content:''; content:none; }
+table {border-collapse: collapse;border-spacing: 0;}
+strong { font-weight:800; }
+a { color:rgb(28,166,209); }
+img { width:100%; }
+
+.clear { clear:both; }
+.left { float:left; }
+.right { float:right; }
+.hidden { display:none; }
+.strong, .bold { font-weight:600; }
+
+
+
+
+.frame { position:relative; margin:0 auto; padding:0.75rem; }
+.bucket { padding:0.75rem; }
+.player_area { position:relative; width:70%; cursor:pointer; overflow:hidden; }
+.player_area:before { content:''; display:block; padding-bottom:56.25%; }
+.player_area.active:before { padding-bottom:0; }
+
+
+.player_area>img { position:absolute; top:0px; left:0px; width:100%; }
+.player_area .placeholder_img:before { content:''; display:block; padding-bottom:56.25%; }
+
+
+.list { width:30%; } 
+.list .item .content { padding:0.75rem; cursor:pointer; position:relative; border-bottom:rgb(215,215,215) solid 1px; }
+.list .item:last-child .content { border-bottom:none; }
+.list .item.active { background-color:rgb(230,230,230); }
