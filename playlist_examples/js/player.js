@@ -11,19 +11,21 @@ jQuery(document).ready(function($){
 		$(this).addClass('active').siblings('.active').removeClass('active');
 
 		var list = $(this).parents('.list'),
-			player = list.siblings('.player_area');
+			player = list.siblings('.player_area'),
+			iframe = player.find('iframe').is('*') ? player.find('iframe') : false,
+			ident = iframe ? iframe.attr('id') : player.find('.player>div').attr('id');
 
-		if(player.find('iframe').is('*')){
+		if(iframe){
 			//-- autoplay video
-			_youtube.player.master_player.loadVideoById($(this).attr('data-vid'));
+			_youtube.player[ident].loadVideoById($(this).attr('data-vid'));
 			
 			//-- load video, no autoplay
-			//_youtube.player.master_player.cueVideoById($(this).attr('data-vid'));
+			//_youtube.player[ident].cueVideoById($(this).attr('data-vid'));
 		} else {
 			player.addClass('active').find('.player>div').addClass('youtube_js').attr('data-vid',$(this).attr('data-vid'));
 
 			//-- autoplay video
-			_youtube.reload($(this).attr('data-vid'));
+			_youtube.reload(ident);
 
 			//-- load video, no autoplay
 			//_youtube.reload();

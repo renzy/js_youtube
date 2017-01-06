@@ -86,7 +86,7 @@ var _youtube = {
 							param.videoId = item.data_vid;
 						}
 
-						if(this.auto_play_id && this.auto_play_id==item.data_vid)
+						if(this.auto_play_id && this.auto_play_id==item.id)
 							param.playerVars.autoplay = 1;
 
 						this.player[item.id] = new YT.Player(item.id,param);
@@ -117,6 +117,7 @@ var _youtube = {
 	},
 
 	reload: function(auto_play_id){
+		console.log(auto_play_id);
 		this.auto_play_id = (typeof auto_play_id!=='undefined') ? auto_play_id : false;
 		this.init('reload');
 	},
